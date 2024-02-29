@@ -7,72 +7,19 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class AppInterface extends JFrame {
-    private int cellSize = 20;
-    private Color gridColor = Color.LIGHT_GRAY;
-    private Color lineColor = Color.BLUE;
-
-    private Point startPoint = null;
-    private Point endPoint = null;
 
     private JPanel sidePanel;
-    JPanel mainPanel;
-
-    private Map<String, ImageIcon> logicGateImages;
+    private JPanel mainPanel;
+    private Board board = Board.getInstance();
+    private WireClickListener wireListener = new WireClickListener();
 
     public AppInterface() {
         initInterface();
-
-        // Set up the grid.
-        JPanel drawingPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                drawGrid(g);
-                if (startPoint != null && endPoint != null) {
-                    g.setColor(lineColor);
-                    g.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
-                }
-            }
-
-            private void drawGrid(Graphics g) {
-                g.setColor(gridColor);
-                for (int i = 0; i <= getWidth(); i += cellSize) {
-                    g.drawLine(i, 0, i, getHeight());
-                }
-                for (int i = 0; i <= getHeight(); i += cellSize) {
-                    g.drawLine(0, i, getWidth(), i);
-                }
-            }
-        };
-
-        drawingPanel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                startPoint = getNearestGridPoint(e.getPoint());
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                endPoint = getNearestGridPoint(e.getPoint());
-                drawingPanel.repaint();
-            }
-        });
-
-        drawingPanel.addMouseMotionListener(new MouseAdapter() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                endPoint = getNearestGridPoint(e.getPoint());
-                drawingPanel.repaint();
-            }
-        });
-
-        mainPanel.add(drawingPanel, BorderLayout.CENTER);
+        mainPanel.add(board, BorderLayout.CENTER);
         add(mainPanel);
         setupMenuBar();
         setVisible(true);
@@ -84,30 +31,20 @@ public class AppInterface extends JFrame {
         gateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                placeLogicGateImage(gateName);
+                if (gateName == "And Gate") {
+                    AndGate gate = new AndGate();
+                    board.addGate(gate);
+                    board.addMouseListener(gate.getListener());
+                    // board.addMouseMotionListener(new DragListener(gate));
+                }
+                if (gateName == "Or Gate") {
+                    OrGate gate = new OrGate();
+                    board.addMouseListener(new GateClickListener(gate));
+                    // board.addMouseMotionListener(new DragListener(gate));
+                }
             }
         });
         sidePanel.add(gateButton);
-    }
-
-    /* This is to be done in the Gate interface/classes */
-    private void placeLogicGateImage(String gateName) {
-        ImageIcon icon = logicGateImages.get(gateName);
-        if (icon != null) {
-            JLabel label = new JLabel(icon);
-            label.setSize(icon.getIconWidth(), icon.getIconHeight());
-            sidePanel.add(label);
-            sidePanel.revalidate();
-            sidePanel.repaint();
-        } else {
-            JOptionPane.showMessageDialog(this, "Image not found for " + gateName, "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    public Point getNearestGridPoint(Point p) {
-        int x = Math.round((float) p.x / cellSize) * cellSize;
-        int y = Math.round((float) p.y / cellSize) * cellSize;
-        return new Point(x, y);
     }
 
     private void initInterface() {
@@ -126,11 +63,10 @@ public class AppInterface extends JFrame {
 
         mainPanel.add(sidePanel, BorderLayout.WEST);
 
-        logicGateImages = new HashMap<>();
-        logicGateImages.put("AND Gate",
-                new ImageIcon("C:/Users/newby/Programming/ECS160/DigitalLogic/src/Images/andGate.png"));
+        addLogicGateWidget("And Gate");
 
-        addLogicGateWidget("AND Gate");
+        addLogicGateWidget("Or Gate");
+
     }
 
     private void setupMenuBar() {
@@ -154,9 +90,19 @@ public class AppInterface extends JFrame {
 
         // Edit Menu
         JMenu editMenu = new JMenu("Edit");
-        JMenuItem clearItem = new JMenuItem("Clear");
-        // clearItem.addActionListener(e -> clearCanvas());
-        editMenu.add(clearItem);
+        JMenuItem clearWires = new JMenuItem("Clear");
+        clearWires.addActionListener(e -> board.Clear());
+        editMenu.add(clearWires);
+
+        JMenu mode = new JMenu("Mode");
+        JMenuItem enterWire = new JMenuItem("Enter Wire Drawing Mode");
+        enterWire.addActionListener(e -> board.addMouseListener(wireListener));
+
+        JMenuItem exitWire = new JMenuItem("Exit Wire Edit Mode");
+        exitWire.addActionListener(e -> board.removeMouseListener(wireListener));
+
+        mode.add(enterWire);
+        mode.add(exitWire);
 
         // Help Menu
         JMenu helpMenu = new JMenu("Help");
@@ -164,6 +110,7 @@ public class AppInterface extends JFrame {
         // aboutItem.addActionListener(e -> showAbout());
         helpMenu.add(aboutItem);
 
+        menuBar.add(mode);
         menuBar.add(fileMenu);
         menuBar.add(editMenu);
         menuBar.add(helpMenu);

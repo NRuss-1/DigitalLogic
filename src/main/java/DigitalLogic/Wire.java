@@ -12,4 +12,12 @@ public class Wire extends JPanel {
         endPoint = end;
     }
 
+    public Point getStartPoint() {
+        return startPoint;
+    }
+
+    public Point getEndPoint() {
+        return endPoint;
+    }
+
 }
