@@ -20,4 +20,5 @@ public class WireClickListener extends MouseAdapter {
         board.addWire(startPoint, endPoint);
         board.repaint();
     }
+
 }

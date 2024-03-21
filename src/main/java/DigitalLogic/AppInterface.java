@@ -1,72 +1,97 @@
 package DigitalLogic;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
+
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class AppInterface extends JFrame {
 
     private JPanel sidePanel;
-    private JPanel mainPanel;
+
     private Board board = Board.getInstance();
     private WireClickListener wireListener = new WireClickListener();
 
     public AppInterface() {
         initInterface();
-        mainPanel.add(board, BorderLayout.CENTER);
-        add(mainPanel);
+        this.add(board, BorderLayout.CENTER);
         setupMenuBar();
         setVisible(true);
     }
 
     private void addLogicGateWidget(String gateName) {
         JButton gateButton = new JButton(gateName);
+        gateButton.setPreferredSize(new Dimension(150, 60));
         gateButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        gateButton.setBackground(Color.LIGHT_GRAY);
+        gateButton.setForeground(Color.BLACK);
+        gateButton.setFont(new Font("Arial", Font.BOLD, 14)); // Change font
         gateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (gateName == "And Gate") {
-                    AndGate gate = new AndGate();
-                    board.addGate(gate);
-                    board.addMouseListener(gate.getListener());
-                    // board.addMouseMotionListener(new DragListener(gate));
-                }
-                if (gateName == "Or Gate") {
-                    OrGate gate = new OrGate();
-                    board.addMouseListener(new GateClickListener(gate));
-                    // board.addMouseMotionListener(new DragListener(gate));
+                switch (gateName) {
+                    case "And Gate":
+                        board.addGate(new AndGate());
+                        break;
+                    case "Or Gate":
+                        board.addGate(new OrGate());
+                        break;
+                    case "XOr Gate":
+                        board.addGate(new XOrGate());
+                        break;
+                    case "NAnd Gate":
+                        board.addGate(new NAndGate());
+                        break;
+                    case "XNor Gate":
+                        board.addGate(new xNorGate());
+                        break;
+                    case "Input Device":
+                        board.addGate(new InputComponent());
+                        break;
+                    default:
+                        break;
                 }
             }
         });
+        sidePanel.add(Box.createVerticalStrut(10));
         sidePanel.add(gateButton);
     }
 
     private void initInterface() {
-        setTitle("Grid Drawing App");
+        setTitle("Digital Logic");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-
-        mainPanel = new JPanel(new BorderLayout());
 
         // Creating side panel for logic gates
         sidePanel = new JPanel();
         sidePanel.setLayout(new BoxLayout(sidePanel, BoxLayout.Y_AXIS));
-        sidePanel.setPreferredSize(new Dimension(200, getHeight()));
+        sidePanel.setSize(new Dimension(200, getHeight()));
         sidePanel.setBackground(Color.WHITE);
 
-        mainPanel.add(sidePanel, BorderLayout.WEST);
+        this.add(sidePanel, BorderLayout.WEST);
+
+        board.addMouseListener(wireListener);
 
         addLogicGateWidget("And Gate");
 
         addLogicGateWidget("Or Gate");
 
+        addLogicGateWidget("XOr Gate");
+
+        addLogicGateWidget("NAnd Gate");
+
+        addLogicGateWidget("XNor Gate");
+
+        addLogicGateWidget("Input Device");
+
+    }
+
+    private void showAbout() {
+        JOptionPane.showMessageDialog(this, "Simple Digital Logic Application\nVersion 1.0\nCreated by Nicholas Russ",
+                "About",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void setupMenuBar() {
@@ -75,11 +100,11 @@ public class AppInterface extends JFrame {
         // File Menu
         JMenu fileMenu = new JMenu("File");
         JMenuItem saveItem = new JMenuItem("Save");
-        // saveItem.addActionListener(e -> saveImage());
+        saveItem.addActionListener(e -> BoardIO.saveBoard(board, "board.ser"));
         fileMenu.add(saveItem);
 
         JMenuItem loadItem = new JMenuItem("Load");
-        // loadItem.addActionListener(e -> loadImage());
+        loadItem.addActionListener(e -> BoardIO.loadBoard("board.ser"));
         fileMenu.add(loadItem);
 
         fileMenu.add(new JSeparator()); // Separator
@@ -94,24 +119,21 @@ public class AppInterface extends JFrame {
         clearWires.addActionListener(e -> board.Clear());
         editMenu.add(clearWires);
 
-        JMenu mode = new JMenu("Mode");
-        JMenuItem enterWire = new JMenuItem("Enter Wire Drawing Mode");
-        enterWire.addActionListener(e -> board.addMouseListener(wireListener));
+        JMenu mode = new JMenu("Wiring Tool");
 
-        JMenuItem exitWire = new JMenuItem("Exit Wire Edit Mode");
-        exitWire.addActionListener(e -> board.removeMouseListener(wireListener));
+        JMenuItem removeWire = new JMenuItem("Remove last wire");
+        removeWire.addActionListener(e -> board.removeWire());
 
-        mode.add(enterWire);
-        mode.add(exitWire);
+        mode.add(removeWire);
 
         // Help Menu
         JMenu helpMenu = new JMenu("Help");
         JMenuItem aboutItem = new JMenuItem("About");
-        // aboutItem.addActionListener(e -> showAbout());
+        aboutItem.addActionListener(e -> showAbout());
         helpMenu.add(aboutItem);
 
-        menuBar.add(mode);
         menuBar.add(fileMenu);
+        menuBar.add(mode);
         menuBar.add(editMenu);
         menuBar.add(helpMenu);
         setJMenuBar(menuBar);

@@ -1,15 +1,15 @@
 package DigitalLogic;
 
-import java.util.ArrayList;
 import java.awt.*;
+import java.awt.Toolkit;
+import java.util.ArrayList;
 
-public class OrGate extends Gate {
+public class NAndGate extends Gate {
 
-    public OrGate() {
-
+    public NAndGate() {
         Image image = Toolkit.getDefaultToolkit()
                 .createImage("C:\\Users\\n" + //
-                        "ewby\\Programming\\ECS160\\DigitalLogic\\src\\Images\\orGate.png");
+                        "ewby\\Programming\\ECS160\\DigitalLogic\\src\\Images\\NAndGate.png");
         setImage(image);
     }
 
@@ -19,9 +19,9 @@ public class OrGate extends Gate {
         for (Wire input : inputs) {
             boolean state = input.getState();
             if (state) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 }
